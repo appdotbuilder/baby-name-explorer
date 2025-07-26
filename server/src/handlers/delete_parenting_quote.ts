@@ -1,18 +1,25 @@
 
+import { db } from '../db';
+import { parentingQuotesTable } from '../db/schema';
 import { type ParentingQuote } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const deleteParentingQuote = async (id: number): Promise<ParentingQuote> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a parenting quote entry from the database by ID.
-    // Should validate that the record exists, delete it, and return the deleted record.
-    return Promise.resolve({
-        id: id,
-        quote: 'Deleted Quote', // Placeholder
-        author: null,
-        category: null,
-        language: 'english' as const,
-        is_active: false,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as ParentingQuote);
+  try {
+    // Delete the parenting quote and return the deleted record
+    const result = await db.delete(parentingQuotesTable)
+      .where(eq(parentingQuotesTable.id, id))
+      .returning()
+      .execute();
+
+    // Check if any record was deleted
+    if (result.length === 0) {
+      throw new Error(`Parenting quote with id ${id} not found`);
+    }
+
+    return result[0];
+  } catch (error) {
+    console.error('Parenting quote deletion failed:', error);
+    throw error;
+  }
 };

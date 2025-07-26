@@ -1,20 +1,30 @@
 
+import { db } from '../db';
+import { babyNamesTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type BabyName } from '../schema';
 
 export const deleteBabyName = async (id: number): Promise<BabyName> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a baby name entry from the database by ID.
-    // Should validate that the record exists, delete it, and return the deleted record.
-    return Promise.resolve({
-        id: id,
-        name: 'Deleted Name', // Placeholder
-        meaning: 'Deleted Meaning', // Placeholder
-        origin: 'Deleted Origin', // Placeholder
-        gender: 'unisex' as const,
-        language: 'english' as const,
-        pronunciation: null,
-        popularity_rank: null,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as BabyName);
+  try {
+    // First, check if the record exists
+    const existingRecord = await db.select()
+      .from(babyNamesTable)
+      .where(eq(babyNamesTable.id, id))
+      .execute();
+
+    if (existingRecord.length === 0) {
+      throw new Error(`Baby name with ID ${id} not found`);
+    }
+
+    // Delete the record and return it
+    const result = await db.delete(babyNamesTable)
+      .where(eq(babyNamesTable.id, id))
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Baby name deletion failed:', error);
+    throw error;
+  }
 };

@@ -1,17 +1,30 @@
 
+import { db } from '../db';
+import { appConfigTable } from '../db/schema';
 import { type AppConfig } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const deleteAppConfig = async (id: number): Promise<AppConfig> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting an app configuration entry from the database by ID.
-    // Should validate that the record exists, delete it, and return the deleted record.
-    return Promise.resolve({
-        id: id,
-        config_key: 'deleted_key', // Placeholder
-        config_value: 'deleted_value', // Placeholder
-        description: null,
-        is_active: false,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as AppConfig);
+  try {
+    // First verify the record exists
+    const existing = await db.select()
+      .from(appConfigTable)
+      .where(eq(appConfigTable.id, id))
+      .execute();
+
+    if (existing.length === 0) {
+      throw new Error(`App config with id ${id} not found`);
+    }
+
+    // Delete the record and return it
+    const result = await db.delete(appConfigTable)
+      .where(eq(appConfigTable.id, id))
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('App config deletion failed:', error);
+    throw error;
+  }
 };
